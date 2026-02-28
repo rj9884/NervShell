@@ -2,7 +2,7 @@
 
 An AI-powered shell agent that gives a large language model direct access to your machine's command line. Send natural language instructions over HTTP and let the agent figure out the commands.
 
-Built with Node.js, OpenAI, Express, and Zod.
+Built with Node.js, OpenRouter, Express, and Zod.
 
 ## How It Works
 
@@ -20,15 +20,15 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env and set your OpenAI API key
+# Edit .env and set your OpenRouter API key (get one free at https://openrouter.ai/keys)
 ```
 
 ### Environment Variables
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `OPENAI_API_KEY` | Yes | - | Your OpenAI API key |
-| `OPENAI_MODEL` | No | `gpt-4o` | Model to use |
+| `OPENROUTER_API_KEY` | Yes | - | Your OpenRouter API key (free tier available) |
+| `OPENROUTER_MODEL` | No | `google/gemini-2.0-flash-exp:free` | Model to use |
 | `PORT` | No | `3000` | Server port |
 
 ## Usage
@@ -75,7 +75,7 @@ curl http://localhost:3000/health
 ```
 src/
   index.ts   - Express server and route handlers
-  agent.ts   - AI agent with OpenAI integration, Zod validation, message history
+  agent.ts   - AI agent with OpenRouter integration, Zod validation, message history
   tools.ts   - Tool definitions and shell command execution
 ```
 

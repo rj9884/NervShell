@@ -41,8 +41,11 @@ export class Agent {
   private model: string;
   private history: ConversationMessage[];
 
-  constructor(apiKey: string, model = "gpt-4o") {
-    this.client = new OpenAI({ apiKey });
+  constructor(apiKey: string, model = "google/gemini-2.0-flash-exp:free") {
+    this.client = new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey,
+    });
     this.model = model;
     this.history = [{ role: "system", content: SYSTEM_PROMPT }];
   }

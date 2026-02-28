@@ -3,16 +3,17 @@ import express, { type Request, type Response } from "express";
 import { Agent } from "./agent.js";
 
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.0-flash-exp:free";
 
-if (!OPENAI_API_KEY) {
-  console.error("Error: OPENAI_API_KEY environment variable is required.");
-  console.error("Create a .env file with OPENAI_API_KEY=sk-...");
+if (!OPENROUTER_API_KEY) {
+  console.error("Error: OPENROUTER_API_KEY environment variable is required.");
+  console.error("Get a free API key at https://openrouter.ai/keys");
+  console.error("Create a .env file with OPENROUTER_API_KEY=sk-or-...");
   process.exit(1);
 }
 
-const agent = new Agent(OPENAI_API_KEY, MODEL);
+const agent = new Agent(OPENROUTER_API_KEY, MODEL);
 const app = express();
 
 app.use(express.json());
