@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { type Request, type Response } from "express";
+import path from "path";
 import { Agent } from "./agent.js";
 
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
@@ -15,6 +16,9 @@ if (!OPENROUTER_API_KEY) {
 
 const agent = new Agent(OPENROUTER_API_KEY, MODEL);
 const app = express();
+
+// Serve static files from public directory
+app.use(express.static(path.join(process.cwd(), "public")));
 
 app.use(express.json());
 
