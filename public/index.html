@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,13 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <div class="app">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
@@ -43,13 +46,23 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Input Area (Top) -->
+      <div class="chat-section">
+        <div class="chat-container" id="output">
+          <div class="welcome-container">
+            <div class="welcome-message">
+              <h1>NervShell</h1>
+              <p>Ask anything. Run commands. Control your system.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="input-section">
         <div class="input-container">
           <div class="input-wrapper">
-            <input type="text" id="input" class="main-input" placeholder="Ask NervShell to do something..." autocomplete="off">
+            <input type="text" id="input" class="main-input" placeholder="Ask NervShell to do something..."
+              autocomplete="off">
             <button id="send-btn" class="send-btn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -60,15 +73,9 @@
           <p class="input-hint">Press Enter to send • Type a command or ask a question</p>
         </div>
       </div>
-
-      <!-- Chat Area -->
-      <div class="chat-section">
-        <div class="chat-container" id="output">
-          <!-- Messages will appear here -->
-        </div>
-      </div>
     </main>
   </div>
   <script src="app.js"></script>
 </body>
+
 </html>

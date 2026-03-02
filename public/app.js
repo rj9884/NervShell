@@ -4,13 +4,9 @@ const sendBtn = document.getElementById('send-btn');
 const clearBtn = document.getElementById('clear-btn');
 const newChatBtn = document.getElementById('new-chat-btn');
 
-// Show welcome message
 showWelcome();
-
-// Handle send button
 sendBtn.addEventListener('click', sendMessage);
 
-// Handle input
 input.addEventListener('keydown', async (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
@@ -18,7 +14,6 @@ input.addEventListener('keydown', async (e) => {
   }
 });
 
-// Handle new chat
 newChatBtn.addEventListener('click', async () => {
   try {
     await fetch('/clear', { method: 'POST' });
@@ -30,7 +25,6 @@ newChatBtn.addEventListener('click', async () => {
   }
 });
 
-// Clear history
 clearBtn.addEventListener('click', async () => {
   try {
     await fetch('/clear', { method: 'POST' });
@@ -44,41 +38,35 @@ clearBtn.addEventListener('click', async () => {
 async function sendMessage() {
   const message = input.value.trim();
   if (!message) return;
-  
+
   input.value = '';
-  
-  // Remove welcome message if present
+
   const welcome = output.querySelector('.welcome-message');
   if (welcome) welcome.remove();
-  
-  // Add user message
+
   addMessage('user', message);
-  
-  // Show loading
+
   const loadingId = showLoading();
-  
+
   try {
-    // Send to API
     const response = await fetch('/message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
-    
-    // Remove loading
+
     removeLoading(loadingId);
-    
+
     if (!response.ok) {
       const error = await response.json();
       addMessage('error', `${error.error || 'Unknown error'}${error.details ? '\n' + error.details : ''}`);
       return;
     }
-    
+
     const data = await response.json();
-    
-    // Parse and display response
+
     displayResponse(data.response);
-    
+
   } catch (err) {
     removeLoading(loadingId);
     addMessage('error', `Network error: ${err.message}`);
@@ -94,20 +82,19 @@ function showWelcome() {
   `;
 }
 
-// Add message to output
 function addMessage(type, content) {
   const div = document.createElement('div');
   div.className = `message message-${type}`;
-  
+
   const header = document.createElement('div');
   header.className = 'message-header';
-  
+
   const avatar = document.createElement('div');
   avatar.className = 'message-avatar';
-  
+
   const author = document.createElement('span');
   author.className = 'message-author';
-  
+
   switch (type) {
     case 'user':
       avatar.textContent = 'You';
@@ -126,39 +113,34 @@ function addMessage(type, content) {
       author.textContent = 'Error';
       break;
   }
-  
+
   header.appendChild(avatar);
   header.appendChild(author);
-  
+
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
   contentDiv.textContent = content;
-  
+
   div.appendChild(header);
   div.appendChild(contentDiv);
   output.appendChild(div);
-  
+
   scrollToBottom();
 }
 
-// Display response with tool call parsing
 function displayResponse(response) {
-  // Check if response contains tool calls
   if (response.includes('[Tool:')) {
-    // Split by tool calls
     const parts = response.split(/(\[Tool: [^\]]+\] [A-Z]+)/);
-    
+
     let currentText = '';
-    
+
     for (const part of parts) {
       if (part.startsWith('[Tool:')) {
-        // Display any accumulated text first
         if (currentText.trim()) {
           addMessage('ai', currentText.trim());
           currentText = '';
         }
-        
-        // Parse tool call
+
         const toolMatch = part.match(/\[Tool: ([^\]]+)\] ([A-Z]+)/);
         if (toolMatch) {
           const toolName = toolMatch[1];
@@ -169,8 +151,7 @@ function displayResponse(response) {
         currentText += part;
       }
     }
-    
-    // Display remaining text
+
     if (currentText.trim()) {
       addMessage('ai', currentText.trim());
     }
@@ -179,7 +160,6 @@ function displayResponse(response) {
   }
 }
 
-// Show loading indicator
 function showLoading() {
   const id = 'loading-' + Date.now();
   const div = document.createElement('div');
@@ -194,21 +174,16 @@ function showLoading() {
   return id;
 }
 
-// Remove loading indicator
 function removeLoading(id) {
   const el = document.getElementById(id);
   if (el) el.remove();
 }
 
-// Scroll to bottom of output
 function scrollToBottom() {
   output.scrollTop = output.scrollHeight;
 }
 
-// Focus input on load
 input.focus();
-
-// Focus input when clicking in chat area (but not on messages)
 output.addEventListener('click', (e) => {
   if (e.target === output) {
     input.focus();

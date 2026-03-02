@@ -67,14 +67,12 @@ export class Agent {
       const choice = completion.choices[0];
       const message = choice.message;
 
-      // Add assistant message to history
       this.history.push({
         role: "assistant",
         content: message.content ?? "",
         tool_calls: message.tool_calls,
       });
 
-      // If the model wants to call tools
       if (message.tool_calls && message.tool_calls.length > 0) {
         for (const toolCall of message.tool_calls) {
           if (toolCall.type !== "function") continue;
@@ -82,7 +80,6 @@ export class Agent {
           const fnName = fnToolCall.function.name;
           const fnArgs = JSON.parse(fnToolCall.function.arguments);
 
-          // Validate with Zod schema
           const parsed = AgentResponseSchema.safeParse({
             type: "tool_call",
             toolCall: { name: fnName, arguments: fnArgs },
@@ -122,13 +119,10 @@ export class Agent {
           );
         }
 
-        // Continue loop so the model can process tool results
         continue;
       }
 
-      // No tool calls -- the model produced a text response
       if (message.content) {
-        // Validate text response against schema
         AgentResponseSchema.safeParse({ type: "text", text: message.content });
         responses.push(message.content);
       }

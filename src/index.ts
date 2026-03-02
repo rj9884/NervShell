@@ -17,17 +17,14 @@ if (!OPENROUTER_API_KEY) {
 const agent = new Agent(OPENROUTER_API_KEY, MODEL);
 const app = express();
 
-// Serve static files from public directory
 app.use(express.static(path.join(process.cwd(), "public")));
 
 app.use(express.json());
 
-// Health check
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-// Send a message to the AI agent
 app.post("/message", async (req: Request, res: Response) => {
   const { message } = req.body;
 
@@ -46,12 +43,10 @@ app.post("/message", async (req: Request, res: Response) => {
   }
 });
 
-// Get conversation history
 app.get("/history", (_req: Request, res: Response) => {
   res.json({ history: agent.getHistory() });
 });
 
-// Clear conversation history
 app.post("/clear", (_req: Request, res: Response) => {
   agent.clearHistory();
   res.json({ message: "Conversation history cleared." });
