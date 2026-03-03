@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-dark: #070709;
+  --color-bg-surface: rgba(18, 18, 24, 0.7);
+  --color-bg-elevated: rgba(26, 26, 34, 0.8);
+  --color-accent: #7C5CFF;
+  --color-accent-hover: #9B7CFF;
+  --color-accent-glow: rgba(124, 92, 255, 0.15);
+
+  --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(124, 92, 255, 0.2);
+
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-dark text-white font-sans antialiased selection:bg-accent/30;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(124, 92, 255, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(91, 140, 255, 0.05) 0px, transparent 50%);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply backdrop-blur-xl bg-bg-surface border border-white/5 shadow-premium;
+  }
+
+  .bg-accent-gradient {
+    background: linear-gradient(135deg, var(--color-accent), #5B8CFF);
+  }
+
+  .transition-premium {
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .text-secondary {
+    @apply text-white/50;
+  }
+
+  .mesh-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .mesh-bg::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(124, 92, 255, 0.03) 0%, transparent 40%);
+    animation: mesh-float 20s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes mesh-float {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(5%, 5%) scale(1.1);
+  }
+}
+
+@layer utilities {
+  .scrollbar-premium::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb {
+    @apply bg-white/5 rounded-full hover:bg-white/10 transition-colors;
+  }
+
+  .animate-glow {
+    animation: accent-pulse 4s ease-in-out infinite;
+  }
+}
+
+@keyframes accent-pulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
