@@ -33,19 +33,23 @@ export class SidebarComponent {
 
     private renderFeatures(): void {
         const features = [
-            { icon: '⌘', label: 'Shell Intelligence' },
-            { icon: '📁', label: 'Context Awareness' },
-            { icon: '🛡️', label: 'Safe Execution' },
-            { icon: '⚡', label: 'Real-time Stream' }
+            { icon: '⌘', label: 'Shell Intelligence', desc: 'Natural language to terminal code.' },
+            { icon: '📁', label: 'Context Awareness', desc: 'Remembers project states.' },
+            { icon: '🛡️', label: 'Vision Safety', desc: 'Secure command execution.' },
+            { icon: '⚡', label: 'Real-time Link', desc: 'Live neural streaming.' }
         ];
 
         this.featureListEl.innerHTML = features.map(f => `
-            <div class="flex items-center gap-3 px-4 py-2 text-xs font-medium text-white/50 transition-premium hover:text-white hover:bg-white/5 rounded-lg group cursor-default">
-                <span class="text-sm grayscale group-hover:grayscale-0 transition-premium">${f.icon}</span>
-                <span>${f.label}</span>
+            <div class="feature-card group cursor-default">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-accent font-bold opacity-0 group-hover:opacity-100 transition-premium text-[8px]">></span>
+                    <span class="text-[10px] font-black tracking-widest uppercase text-white/50 group-hover:text-accent transition-premium">${f.label}</span>
+                </div>
+                <p class="text-[9px] text-white/20 leading-tight group-hover:text-white/40 transition-premium">${f.desc}</p>
             </div>
         `).join('');
     }
+
 
     public setModelName(name: string): void {
         this.modelNameEl.textContent = name;
