@@ -8,8 +8,9 @@ class App {
   private sidebar: SidebarComponent;
 
   constructor() {
+    console.log('[App] Initializing components');
     this.chat = new ChatComponent('output');
-    this.input = new InputComponent('input', 'send-btn', (msg) => this.handleSendMessage(msg));
+    this.input = new InputComponent('chat-form', 'input', (msg) => this.handleSendMessage(msg));
     this.sidebar = new SidebarComponent(
       'new-chat-btn',
       'clear-btn',
@@ -75,5 +76,4 @@ class App {
   }
 }
 
-// Initialize the app
 new App();
