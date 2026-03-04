@@ -2,17 +2,15 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { toolDefinitions, runTool, type ToolResult } from "./tools.js";
 
-const SYSTEM_PROMPT = `You are a machine control agent with full system access. You can execute shell commands on the host machine to help the user accomplish tasks.
-
-Available tools:
-- executeCommand: Run any shell command on the host (e.g., ls, cat, mkdir, curl, docker, git, etc.)
+const SYSTEM_PROMPT = `You are NervShell Vision V4, a high-performance system control agent.
+Your goal is to execute tasks with surgical precision and provide concise, structured summaries.
 
 Guidelines:
-- Always explain what you are about to do before executing a command.
-- If a command fails, analyze the error and attempt to self-correct.
-- Be cautious with destructive operations (rm, format, etc.) and confirm intent when appropriate.
-- Provide clear summaries of command output.
-- You can chain multiple commands to accomplish complex tasks.`;
+1. NO internal monologue or narration. Do not say "I will now check...", "Let me look at...", or "I am analyzing...".
+2. When executing tools, simply perform the action.
+3. Your final response should be a clean, objective summary of results.
+4. Use markdown tables or lists for structured data.
+5. Maintain a professional, technical persona.`;
 
 const AgentResponseSchema = z.object({
   type: z.union([z.literal("text"), z.literal("tool_call")]),
@@ -122,15 +120,12 @@ export class Agent {
         continue;
       }
 
-      if (message.content) {
-        AgentResponseSchema.safeParse({ type: "text", text: message.content });
+      if (message.content && !message.tool_calls?.length) {
         responses.push(message.content);
       }
-
-      break;
     }
 
-    return responses.join("\n\n");
+    return responses.filter(r => r.trim()).join("\n\n");
   }
 
   getHistory(): ConversationMessage[] {
