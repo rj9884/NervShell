@@ -14,92 +14,112 @@
 </head>
 
 <body class="bg-bg-dark text-white h-screen overflow-hidden antialiased font-sans">
-  <div class="mesh-bg"></div>
-  <div class="flex h-screen app p-4 gap-4">
+  <div class="flex h-screen app">
     <!-- Sidebar -->
-    <aside class="sidebar w-[300px] glass-panel rounded-xl flex flex-col p-6 gap-6 z-10 transition-premium">
-      <div class="mb-4 sidebar-header">
-        <div class="flex items-center gap-3 logo">
+    <aside
+      class="sidebar w-[320px] bg-bg-dark/50 border-r border-white/5 flex flex-col p-8 gap-8 z-10 transition-premium">
+      <div class="sidebar-header">
+        <div class="flex items-center gap-3 logo group cursor-pointer">
           <div
-            class="flex items-center justify-center w-10 h-10 font-semibold text-white rounded-lg logo-icon bg-accent-gradient font-mono text-[14px] shadow-glow">
+            class="flex items-center justify-center w-12 h-12 font-bold text-white rounded-xl logo-icon accent-gradient shadow-glow-red font-mono text-lg transition-premium group-hover:scale-110">
             NS</div>
-          <span
-            class="text-xl font-bold logo-text tracking-tight bg-accent-gradient bg-clip-text text-transparent">NervShell</span>
+          <div class="flex flex-col">
+            <span class="text-2xl font-black logo-text tracking-tighter leading-none italic">
+              <span class="text-accent">Nerv</span>Shell
+            </span>
+            <span class="text-[9px] font-bold tracking-[0.3em] text-white/30 uppercase mt-1">Vision System v4</span>
+          </div>
         </div>
       </div>
 
-      <nav class="flex flex-col flex-1 gap-2 sidebar-nav">
+      <nav class="flex flex-col flex-1 gap-6 sidebar-nav">
         <button id="new-chat-btn"
-          class="flex items-center justify-center gap-3 px-4 py-3.5 text-sm font-semibold text-white transition-premium rounded-lg shadow-glow nav-btn bg-accent-gradient hover:brightness-110 active:scale-95">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          class="flex items-center justify-center gap-3 px-6 py-4 text-xs font-black tracking-widest uppercase text-white transition-premium rounded-lg accent-gradient shadow-glow-red hover:brightness-110 active:scale-95">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
           New Session
         </button>
 
-        <div class="mt-8 space-y-4">
-          <h3 class="px-4 text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">Capabilities</h3>
-          <div id="feature-list" class="space-y-1">
-            <!-- Dynamic features populated by JS -->
+        <div class="mt-4 space-y-6">
+          <h3 class="title-chevron px-2 text-[11px] font-black tracking-[0.2em] text-white/40 uppercase">Capabilities
+          </h3>
+          <div id="feature-list" class="grid grid-cols-1 gap-3">
+            <!-- Dynamic feature cards populated by JS -->
           </div>
         </div>
 
-        <div class="mt-auto space-y-2">
+        <div class="mt-auto">
           <button id="clear-btn"
-            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-premium rounded-lg nav-btn text-white/40 hover:bg-white/5 hover:text-white/70 active:scale-95">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            class="group w-full flex items-center gap-3 px-4 py-3 text-[10px] font-bold tracking-widest uppercase transition-premium rounded-lg text-white/30 hover:bg-white/5 hover:text-accent active:scale-95">
+            <svg class="transition-premium group-hover:rotate-12" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5">
+              <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
             </svg>
-            Purge Context
+            Purge History
           </button>
         </div>
       </nav>
 
-      <div class="pt-4 border-t border-white/5 sidebar-footer">
-        <div class="flex items-center gap-3 px-4 py-2.5 text-xs rounded-lg glass-panel bg-white/2">
-          <span class="w-2 h-2 rounded-full bg-accent shadow-glow animate-pulse"></span>
-          <span id="model-name" class="font-medium text-white/60">GPT-4 Omni</span>
+      <div class="pt-6 border-t border-white/5 sidebar-footer">
+        <div
+          class="flex items-center justify-between px-3 py-2 text-[10px] font-bold tracking-widest uppercase text-white/40">
+          <span>Neural Engine</span>
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-glow-teal animate-pulse"></span>
+            <span id="model-name" class="text-white/60">Vision-1</span>
+          </div>
         </div>
       </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="relative flex flex-col flex-1 overflow-hidden main h-full">
-      <div class="flex flex-col flex-1 overflow-hidden chat-section rounded-xl relative">
+    <main
+      class="relative flex flex-col flex-1 overflow-hidden main h-full bg-gradient-to-b from-transparent to-bg-dark/80">
+      <div class="flex flex-col flex-1 overflow-hidden chat-section relative">
         <div id="output"
-          class="flex flex-col flex-1 gap-8 overflow-y-auto px-10 py-10 pb-[160px] chat-container scrollbar-premium">
-          <div class="flex flex-col items-center justify-center welcome-container h-[50vh]">
+          class="flex flex-col flex-1 gap-12 overflow-y-auto px-12 py-12 pb-[160px] chat-container scrollbar-premium">
+          <div class="flex flex-col items-center justify-center welcome-container h-[55vh]">
             <div class="text-center welcome-message">
               <h1
-                class="text-7xl font-bold tracking-tighter mb-6 bg-accent-gradient bg-clip-text text-transparent opacity-0 animate-[fade-in_1s_ease-out_forwards]">
-                NervShell</h1>
+                class="text-8xl font-black tracking-tighter mb-4 italic opacity-0 animate-[fade-in_1s_ease-out_forwards]">
+                <span class="text-accent glow-red">Nerv</span>Shell
+              </h1>
               <p
-                class="mx-auto text-xl font-medium tracking-tight max-w-lg text-white/40 opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards]">
-                Autonomous intelligence for your terminal environment.
+                class="mx-auto text-xl font-medium tracking-tight max-w-lg text-white/30 opacity-0 animate-[fade-in_1s_ease-out_0.2s_forwards] uppercase tracking-[0.2em] text-sm font-bold">
+                The AI that gets things done.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Input Area (Floating) -->
-        <div class="absolute bottom-0 left-0 right-0 z-10 p-10 pointer-events-none input-section">
-          <div class="w-full mx-auto max-w-[850px] pointer-events-auto">
-            <div
-              class="relative flex items-center p-2 rounded-xl transition-premium glass-panel focus-within:ring-2 focus-within:ring-accent/40 focus-within:-translate-y-1.5 group">
+        <div class="input-mask"></div>
+
+        <!-- Input Area -->
+        <div class="absolute bottom-0 left-0 right-0 z-10 p-12 pointer-events-none input-section">
+          <div class="w-full mx-auto max-w-[900px] pointer-events-auto">
+            <form id="chat-form"
+              class="relative flex items-center p-3 rounded-2xl transition-premium glass-panel border-white/10 hover:border-accent/30 focus-within:border-accent/50 focus-within:shadow-glow-red group bg-bg-elevated/40">
               <input type="text" id="input"
-                class="flex-1 px-6 py-5 text-lg bg-transparent border-none outline-none main-input text-white placeholder-white/20 font-medium"
-                placeholder="Initialize command sequence..." autocomplete="off">
-              <button id="send-btn"
-                class="flex items-center justify-center w-14 h-14 mr-1 text-white transition-premium rounded-lg shadow-glow send-btn bg-accent-gradient hover:brightness-110 hover:scale-105 active:scale-95">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                class="flex-1 px-6 py-5 text-lg bg-transparent border-none outline-none main-input text-white placeholder-white/10 font-medium"
+                placeholder="Talk to NervShell..." autocomplete="off">
+              <button id="send-btn" type="submit"
+                class="flex items-center justify-center w-16 h-16 mr-1 text-white transition-premium rounded-xl shadow-glow-red accent-gradient hover:scale-105 active:scale-95 group-focus-within:rotate-2">
+                <svg class="pointer-events-none" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3">
                   <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2"></path>
                 </svg>
               </button>
+            </form>
+            <div class="flex justify-center gap-8 mt-6 opacity-40">
+              <div class="flex items-center gap-2 text-[9px] font-black tracking-[0.3em] uppercase">
+                <span class="w-1.5 h-1.5 rounded-full bg-accent"></span> Safe Mode Active
+              </div>
+              <div class="flex items-center gap-2 text-[9px] font-black tracking-[0.3em] uppercase">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Neural Link Ready
+              </div>
             </div>
-            <p class="mt-4 text-[10px] text-center tracking-widest uppercase font-bold text-white/20">system status:
-              ready • secure link established</p>
           </div>
         </div>
       </div>
