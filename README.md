@@ -1,6 +1,8 @@
 # NervShell
 
-An AI-powered shell agent that gives a large language model direct access to your machine's command line. Send natural language instructions over HTTP and let the agent figure out the commands.
+AI-powered shell agent that translates natural language into machine commands. Send natural language instructions over HTTP and let the agent figure out the commands.
+
+![Vision V4 Home Screen](./public/images/home.png)
 
 ## Table of Contents
 
@@ -55,6 +57,8 @@ An AI-powered shell agent that gives a large language model direct access to you
 ---
 
 ## System Flow
+
+![Agent Executing Command](./public/images/executing-command.png)
 
 ```mermaid
 sequenceDiagram
@@ -208,6 +212,8 @@ Reset conversation history to initial system prompt only.
 
 ### Current Tools
 
+![Neural Flow Output](./public/images/output.png)
+
 | Tool | Function | Parameters | Returns |
 |------|----------|------------|---------|
 | executeCommand | Run shell command | command: string | ToolResult object |
@@ -336,4 +342,4 @@ To add a new tool:
 
 ## License
 
-ISC
+MIT
