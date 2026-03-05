@@ -18,6 +18,7 @@ AI-powered shell agent that translates natural language into machine commands. S
 - [Extending Tools](#extending-tools)
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
+- [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -337,6 +338,25 @@ To add a new tool:
 | Commands timeout | Long-running process | Increase timeout in tools.ts |
 | Build errors | TypeScript issues | Run npm install then npm run build |
 | UI not loading | Static files not served | Ensure public/ exists and rebuild |
+
+---
+
+## Future Roadmap
+
+Planned features include:
+
+### Intelligence & Connectivity
+- **Multi-Model Orchestration**: Dynamic model switching based on task complexity.
+- **Local LLM Support**: Native integration with Ollama for 100% private execution.
+- **Project RAG**: Vector-based project context to remember files, architecture, and previous solutions.
+
+### Extensibility
+- **Plugin Architecture**: Modular tool system for easy extension without core modification.
+- **Web-Awareness**: Built-in browser sub-agent for documentation lookup and technical research.
+- **Docker Sandbox**: Isolated command execution for enhanced security and safety.
+
+### Interaction & UX
+- **Multi-Session History**: Persistent, cloud-synced (or local-db) conversation management.
 
 ---
 
