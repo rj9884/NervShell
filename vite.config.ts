@@ -16,6 +16,7 @@ export default defineConfig({
             '/message': 'http://localhost:3000',
             '/history': 'http://localhost:3000',
             '/clear': 'http://localhost:3000',
+            '/api': 'http://localhost:3000',
         },
     },
 });
