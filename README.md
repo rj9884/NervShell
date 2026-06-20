@@ -184,6 +184,17 @@ Clears session message history logs.
   ```
   Access the server port at `http://localhost:3000`.
 
+- **Vercel Deployment**:
+  1. Go to the Vercel dashboard and click **New Project**.
+  2. Select and import your `NervShell` repository.
+  3. In the project settings configuration:
+     - **Framework Preset**: Choose **Vite** or **Other**.
+     - **Build Command**: `npm run build`
+     - **Output Directory**: `dist/client`
+  4. Configure your environment variables in Vercel:
+     - Add `OPENROUTER_API_KEY` (and optionally `OPENROUTER_MODEL`).
+  5. Deploy. Vercel automatically deploys the static frontend from `dist/client` and builds the serverless API functions located in the `/api` directory.
+
 ---
 
 ## Security Guidelines

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { type ConversationMessage } from "./agent.js";
 
 export interface Session {
@@ -21,8 +22,9 @@ export class SessionManager {
   private sessions: Map<string, Session> = new Map();
   private filePath: string;
 
-  constructor(storageDir = process.cwd()) {
-    this.filePath = path.join(storageDir, ".sessions.json");
+  constructor(storageDir?: string) {
+    const defaultDir = process.env.VERCEL ? os.tmpdir() : process.cwd();
+    this.filePath = path.join(storageDir || defaultDir, ".sessions.json");
     this.loadFromDisk();
   }
 
