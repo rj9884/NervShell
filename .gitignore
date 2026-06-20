@@ -4,3 +4,4 @@ dist/
 .qoder/
 .agents/
 skills-lock.json
+.sessions.json
