@@ -16,9 +16,7 @@ export class ChatComponent {
   public showWelcome(): void {
     this.container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-[50vh] text-center max-w-lg mx-auto space-y-4 animate-fade-in">
-        <div class="w-12 h-12 bg-blue-50 text-accent-blue font-bold font-mono rounded-lg flex items-center justify-center text-lg shadow-sm border border-blue-100">
-          NS
-        </div>
+        <img src="/favicon.svg" alt="NervShell Logo" class="w-12 h-12">
         <h2 class="text-xl font-display font-bold text-text-primary">NervShell Control Session</h2>
         <p class="text-xs text-text-secondary leading-relaxed">
           This workspace is isolated. The AI assistant can list files, read directories, scan telemetry, and write documentation. Terminal executions will halt for approval under Safe Mode.
