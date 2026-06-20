@@ -290,8 +290,6 @@ class App {
             this.chat.displayResponse(msg.content);
           } else if (msg.role === "user") {
             this.chat.addMessage("user", msg.content);
-          } else if (msg.role === "tool") {
-            this.chat.addMessage("tool", msg.content);
           }
         });
       }

@@ -105,7 +105,7 @@ export class ChatComponent {
   }
 
   public displayResponse(response: string): void {
-    // Check if response is a Safe Mode Awaiting Approval block
+    // Check if response is a JSON payload
     try {
       const parsed = JSON.parse(response);
       if (parsed && parsed.status === "awaiting_approval") {
@@ -117,36 +117,22 @@ export class ChatComponent {
         this.showApprovalPanel(parsed.toolCall.id, parsed.toolCall.command);
         return;
       }
+      
+      // Skip rendering raw tool JSON output responses
+      if (parsed && (parsed.tool || parsed.success !== undefined)) {
+        return;
+      }
     } catch (_) {}
 
-    // Normal stream output
-    if (response.includes("[Tool:")) {
-      const parts = response.split(/(\[Tool: [^\]]+\] [A-Z]+)/);
-      let currentText = "";
-
-      for (const part of parts) {
-        if (part.startsWith("[Tool:")) {
-          if (currentText.trim()) {
-            this.addMessage("assistant", currentText.trim());
-            currentText = "";
-          }
-          const toolMatch = part.match(/\[Tool: ([^\]]+)\] ([A-Z]+)/);
-          if (toolMatch) {
-            // Include tool execution body from remainder of part
-            const fullToolOutput = part + parts[parts.indexOf(part) + 1];
-            parts[parts.indexOf(part) + 1] = ""; // Clear next block since merged
-            this.addMessage("tool", fullToolOutput);
-          }
-        } else {
-          currentText += part;
-        }
+    // Filter out parts of response that start with [Tool:
+    const blocks = response.split("\n\n");
+    const cleanBlocks = blocks.filter(block => !block.trim().startsWith("[Tool:"));
+    
+    if (cleanBlocks.length > 0) {
+      const cleanResponse = cleanBlocks.join("\n\n");
+      if (cleanResponse.trim()) {
+        this.addMessage("assistant", cleanResponse.trim());
       }
-
-      if (currentText.trim()) {
-        this.addMessage("assistant", currentText.trim());
-      }
-    } else {
-      this.addMessage("assistant", response);
     }
   }
 
