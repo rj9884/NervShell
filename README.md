@@ -1,110 +1,188 @@
-# NervShell: Personal AI Assistant
+# NervShell: Personal AI Workspace Assistant
 
-An autonomous, personal AI assistant dashboard that translates natural language instructions into safe workspace actions and system commands. Built on top of Express, Vite, Tailwind CSS (v4), and OpenRouter APIs.
+An autonomous, local AI assistant dashboard designed to translate natural language instructions into safe workspace actions, directory manipulation, and verified system command execution. Built using Node.js, Express, Vite, Tailwind CSS (v4), and OpenRouter APIs.
 
-![NervShell Dashboard](./public/images/home.png)
+---
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Architecture Overview](#architecture-overview)
+- [Core Features](#core-features)
+- [Project Directory Structure](#project-directory-structure)
+- [API Reference](#api-reference)
+  - [Sessions API](#sessions-api)
+  - [Workspace & Diagnostics API](#workspace--diagnostics-api)
+  - [Agent Execution API](#agent-execution-api)
+- [Setup and Installation](#setup-and-installation)
+  - [Prerequisites](#prerequisites)
+  - [Configuration](#configuration)
+  - [Running the Application](#running-the-application)
+- [Security Guidelines](#security-guidelines)
+
+---
+
+## Introduction
+
+NervShell provides developers and system administrators with a technical workspace companion. By connecting natural language processing to sandboxed workspace tools, the application offers an alternative to executing raw terminal instructions manually, maintaining a secure verification loop before any CLI action takes place.
+
+---
 
 ## Architecture Overview
 
+The system divides responsibilities between a client dashboard, a REST API server, and an AI reasoning agent coordinating local tools:
+
 ```
- ┌──────────────────────┐      REST API      ┌────────────────────┐      API       ┌─────────────────┐
- │   Web Browser Client │ ◄────────────────► │   Express Server   │ ◄────────────► │   OpenRouter    │
- │ (Landing / Dashboard)│                    │     (Node.js)      │                │    (LLM API)    │
- └──────────────────────┘                    └─────────┬──────────┘                └─────────────────┘
-                                                       │
-                                                       │ Path Scans & Child Process
-                                                       ▼
-                                            ┌─────────────────────┐
-                                            │ Workspace Exec      │
-                                            │ (File Tree / CLI)   │
-                                            └─────────────────────┘
+┌──────────────────────┐      REST API      ┌────────────────────┐      API       ┌─────────────────┐
+│  Browser Dashboard   │ ◄────────────────► │   Express Server   │ ◄────────────► │   OpenRouter    │
+│  (Landing & Console) │                    │     (Node.js)      │                │  (Gemini/LLaMA) │
+└──────────────────────┘                    └─────────┬──────────┘                └─────────────────┘
+                                                      │
+                                                      │ Path Scans & CLI Executes
+                                                      ▼
+                                           ┌─────────────────────┐
+                                           │ Workspace Engine    │
+                                           │ (File Tree / Shell) │
+                                           └─────────────────────┘
 ```
 
 ---
 
-## Key Capabilities
+## Core Features
 
-- 🖥️ **Minimal Technical IDE Layout**: Shipped a flat, clean slate-tinted light-theme dashboard design (avoiding glassmorphism) consisting of 3-pane workspaces.
-- 📁 **Workspace File Tree Explorer**: Browse the repository workspace folder structure directly from the dynamic sidebar explorer.
-- 🔗 **System OS Connection Switch**: Toggle connection status in the sidebar:
-  - *Workspace Mode (Disconnected)*: Access is strictly locked down to the repository directory.
-  - *System OS Mode (Connected)*: Directory scopes expand to the home directory (`~` or `/home/rajan`) for system-wide operations.
-- 📊 **Diagnostic Telemetry Dashboard**: Polls active CPU loads, core usage, RAM metrics, OS platform, and uptime gauges in real time.
-- 🛡️ **Safe Mode Execution Policy (Default On)**: Prompts the user with a warning decider box displaying the proposed CLI command before running any shell process. Halt, approve, or reject tasks.
-- 💬 **Conversation Sessions Manager**: Spin up independent sessions dynamically and persist conversation logs locally across server restarts.
-- ✏️ **Frictionless Markdown Parser**: Fenced code blocks with Copy buttons, bold, italic, links, lists, and HTML tables are parsed cleanly.
+- **Technical Dashboard UI**: A clean, light-theme 3-pane IDE layout constructed with solid borders, focusing on clean spacing and precise columns without glassmorphism or blur elements.
+- **Interactive Workspace Explorer**: A file explorer sidebar rendering directories dynamically, allowing live inspections of repository contents.
+- **Host OS Connection Switch**: A sidebar toggle allowing the user to select the assistant's boundaries:
+  - *Disconnected Mode*: The assistant is restricted to reading, writing, and listing files inside the local repository.
+  - *Connected Mode*: Boundaries expand relative to the user's home directory (~), permitting system-wide directory scans.
+- **System Telemetry Monitoring**: Periodic background polling capturing active CPU load, CPU cores, RAM allocation metrics, platform OS description, and system uptime.
+- **Safe Mode Interruption (Enabled by Default)**: Terminal command proposals halt execution and trigger a high-contrast confirmation warning panel. Command executions require explicit user authorization before launching.
+- **Multi-Session Conversation persistence**: In-memory and file-based session manager storing history logs in a local JSON database across server restarts.
+- **Custom Markdown Translator**: Client-side parser translating headers, bold/italic markup, inline codes, code blocks with copy utilities, lists, and HTML tables.
 
 ---
 
-## Project Structure
+## Project Directory Structure
 
-| Component | Path | Description |
-|-----------|------|-------------|
-| **Server Engine** | `src/server/index.ts` | Express routing gateway, telemetry metrics, settings, and workspace APIs. |
-| | `src/server/agent.ts` | OpenRouter API wrapper, assistant logic loop, and execution approvals. |
-| | `src/server/tools.ts` | Tool definitions (`executeCommand`, `readFile`, `writeFile`, `listFiles`, `getSystemInfo`, `webSearch`). |
-| | `src/server/session.ts` | Sessions CRUD manager persisting conversation states to `.sessions.json`. |
-| **Client UI** | `src/client/app.ts` | Client state coordinator, navbar triggers, and API transmission loops. |
-| | `src/client/components/` | Modular views for `Sidebar`, `Chat`, `Input`, and `Workspace` panels. |
-| | `src/client/utils/` | Custom lightweight `markdown` renderer. |
-| | `src/client/styles/main.css` | Minimalist IDE stylesheet config (Tailwind CSS v4). |
+```
+.
+├── src/
+│   ├── server/
+│   │   ├── index.ts     # Express server setup, API routers, and telemetry polling
+│   │   ├── agent.ts     # LLM coordinator, conversation storage, and Safe Mode approval loop
+│   │   ├── tools.ts     # Tool definitions (executeCommand, readFile, writeFile, listFiles)
+│   │   └── session.ts   # Session persistence manager storing logs in .sessions.json
+│   │
+│   └── client/
+│       ├── app.ts       # Application state coordinator and view toggles
+│       ├── types.ts     # Typescript type definitions
+│       ├── components/
+│       │   ├── Chat.ts  # Render bubbles, loading indicators, and approval panels
+│       │   ├── Sidebar.ts# Manage session selections, safe mode state, and engine selection
+│       │   └── Workspace.ts # Workspace directory scans and telemetry gauge renderers
+│       └── utils/
+│           └── markdown.ts # Fenced blocks, tables, and link markdown compiler
+│
+├── public/              # Favicon assets, global images, and site manifests
+├── index.html           # Landing page markup and dashboard grid structures
+├── package.json         # Project script parameters and dependencies
+├── vite.config.ts       # Proxy routing settings and watch exclusions
+└── tsconfig.json        # TypeScript compiler configurations
+```
 
 ---
 
 ## API Reference
 
-### 1. Sessions Management
-- `GET /api/sessions`: Returns list of saved conversation summaries.
-- `POST /api/sessions`: Creates a new session `{ id, title }`.
-- `DELETE /api/sessions/:id`: Deletes session logs.
+### Sessions API
 
-### 2. Workspace & OS Diagnostics
-- `GET /api/workspace`: Returns directory structure list of relative/system files.
-- `GET /api/system`: Obtains CPU cores, active loads, RAM stats, and uptime.
-- `POST /api/settings`: Updates model configs or connects/disconnects System OS toggles `{ model, systemConnected }`.
+#### GET /api/sessions
+Returns a list of saved conversation summaries.
 
-### 3. Agent Execution Loop
-- `POST /message`: Submits query `{ message, sessionId, safeMode }`. If Safe Mode halts CLI task, returns:
-  `{ status: "awaiting_approval", toolCall: { id, name, command } }`.
-- `POST /api/approve`: Approves/rejects pending CLI task `{ sessionId, toolCallId, approved, command, safeMode }`. Returns next AI response stream.
-- `GET /history?sessionId=id`: Obtains session messages.
-- `POST /clear`: Clears session log `{ sessionId }`.
+#### POST /api/sessions
+Creates a new conversation session.
+- Request Body: `{ id?: string, title?: string }`
+
+#### DELETE /api/sessions/:id
+Deletes target conversation session files.
 
 ---
 
-## Setup & Running
+### Workspace & Diagnostics API
+
+#### GET /api/workspace
+Returns directory node listings. Adapts automatically to scan home directories when System OS connection is active.
+
+#### GET /api/system
+Obtains CPU cores, active loads, RAM stats, platform details, and uptime.
+
+#### POST /api/settings
+Updates settings configurations or connects/disconnects System OS toggles.
+- Request Body: `{ model?: string, systemConnected?: boolean }`
+
+---
+
+### Agent Execution API
+
+#### POST /message
+Submits user message query to the agent loop.
+- Request Body: `{ message: string, sessionId: string, safeMode: boolean }`
+- Interrupted Response: `{ status: "awaiting_approval", toolCall: { id, name, command } }`
+- Completed Response: `{ response: string }`
+
+#### POST /api/approve
+Approves or rejects pending shell executions.
+- Request Body: `{ sessionId: string, toolCallId: string, approved: boolean, command: string, safeMode: boolean }`
+- Response: `{ response: string }`
+
+#### GET /history
+Obtains conversation messages.
+- Query Parameter: `sessionId`
+
+#### POST /clear
+Clears session message history logs.
+- Request Body: `{ sessionId: string }`
+
+---
+
+## Setup and Installation
 
 ### Prerequisites
 - Node.js 18 or higher
-- OpenRouter API Key (placed in `.env` variable `OPENROUTER_API_KEY`)
+- OpenRouter API Key (retrieve a free key at [openrouter.ai](https://openrouter.ai))
 
-### Installation
-1. Install dependencies:
+### Configuration
+1. Initialize directory dependencies:
    ```bash
    npm install
    ```
-2. Setup environment keys:
+2. Create environment file:
    ```bash
    cp .env.example .env
-   # Edit .env and enter your OpenRouter key
+   ```
+3. Edit `.env` and configure your API key:
+   ```env
+   OPENROUTER_API_KEY=your_key_here
    ```
 
-### Running Scripts
-- **Development**:
+### Running the Application
+- **Development Mode**: Runs Vite and Express servers concurrently with hot-reloading:
   ```bash
   npm run dev
   ```
-  Runs Vite dev server on `http://localhost:5173` and Express on `http://localhost:3000` concurrently with hot reloading.
-- **Production Build**:
+  Access the client dashboard at `http://localhost:5173`.
+
+- **Production Mode**: Compiles TypeScript backend and Vite client bundles:
   ```bash
   npm run build
   npm start
   ```
-  Compiles Vite assets and TypeScript server, running production build on `http://localhost:3000`.
+  Access the server port at `http://localhost:3000`.
 
 ---
 
-## Security Considerations
+## Security Guidelines
 
-- **Path Resolution Boundary**: When disconnected, path parameters are resolved using a strictly locked boundary validation check preventing path traversal attacks.
-- **Command Injection Safety**: Safe Mode halts raw shell execution loops. Running processes requires browser approval validation before triggers.
+1. **Path Scopes**: Path inputs are resolved relative to strict root directories. When disconnected, any relative path resolving outside of the repository boundary throws an access denial exception.
+2. **Safe Mode Default**: Command executions remain blocked until authorized inside the client confirmation decider panel.
+3. **API Keys**: Do not commit the `.env` configuration file to source control. Keep keys secure.
