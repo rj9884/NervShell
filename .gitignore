@@ -2,3 +2,6 @@ node_modules/
 dist/
 .env
 .qoder/
+.agents/
+skills-lock.json
+.sessions.json
