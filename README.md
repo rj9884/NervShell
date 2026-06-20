@@ -1,3 +1,5 @@
+<img width="2850" height="1558" alt="landing" src="https://github.com/user-attachments/assets/b75c36ea-f884-430f-b8b4-42601e7eb37b" />
+
 # NervShell: Personal AI Workspace Assistant
 
 An autonomous, local AI assistant dashboard designed to translate natural language instructions into safe workspace actions, directory manipulation, and verified system command execution. Built using Node.js, Express, Vite, Tailwind CSS (v4), and OpenRouter APIs.
@@ -28,6 +30,10 @@ NervShell provides developers and system administrators with a technical workspa
 
 ---
 
+<img width="2880" height="1550" alt="chat" src="https://github.com/user-attachments/assets/c31c1b9c-00de-4b2c-91fe-e03db9f7ac1c" />
+
+---
+
 ## Architecture Overview
 
 The system divides responsibilities between a client dashboard, a REST API server, and an AI reasoning agent coordinating local tools:
@@ -50,7 +56,6 @@ The system divides responsibilities between a client dashboard, a REST API serve
 
 ## Core Features
 
-- **Technical Dashboard UI**: A clean, light-theme 3-pane IDE layout constructed with solid borders, focusing on clean spacing and precise columns without glassmorphism or blur elements.
 - **Interactive Workspace Explorer**: A file explorer sidebar rendering directories dynamically, allowing live inspections of repository contents.
 - **Host OS Connection Switch**: A sidebar toggle allowing the user to select the assistant's boundaries:
   - *Disconnected Mode*: The assistant is restricted to reading, writing, and listing files inside the local repository.
