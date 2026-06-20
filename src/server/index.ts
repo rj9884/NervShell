@@ -22,29 +22,54 @@ const app = express();
 app.use(express.static(path.join(process.cwd(), "public")));
 app.use(express.json());
 
-// Legacy endpoints (with sessionId routing added)
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
 app.post("/message", async (req: Request, res: Response) => {
-  const { message, sessionId } = req.body;
+  const { message, sessionId, safeMode } = req.body;
 
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "A 'message' string field is required in the request body." });
     return;
   }
 
-  // Fallback to default session if none provided
   const activeSessionId = sessionId || "default_session";
+  const safeModeEnabled = safeMode !== false; // default to true
 
   try {
-    const response = await agent.handleMessage(message, activeSessionId);
+    const response = await agent.handleMessage(message, activeSessionId, safeModeEnabled);
     res.json({ response });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error("Agent error:", errorMessage);
     res.status(500).json({ error: "Agent encountered an error.", details: errorMessage });
+  }
+});
+
+app.post("/api/approve", async (req: Request, res: Response) => {
+  const { sessionId, toolCallId, approved, command, safeMode } = req.body;
+
+  if (!sessionId || !toolCallId || !command) {
+    res.status(400).json({ error: "Missing required parameters: sessionId, toolCallId, or command." });
+    return;
+  }
+
+  const safeModeEnabled = safeMode !== false; // default to true
+
+  try {
+    const response = await agent.handleToolApproval(
+      sessionId,
+      toolCallId,
+      approved,
+      command,
+      safeModeEnabled
+    );
+    res.json({ response });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error("Approval process error:", errorMessage);
+    res.status(500).json({ error: "Agent approval process failed.", details: errorMessage });
   }
 });
 
@@ -59,7 +84,6 @@ app.post("/clear", (req: Request, res: Response) => {
   res.json({ message: "Conversation history cleared." });
 });
 
-// New REST endpoints for Personal Assistant Features
 app.get("/api/sessions", (_req: Request, res: Response) => {
   res.json({ sessions: agent.getSessionManager().listSessions() });
 });
@@ -71,11 +95,10 @@ app.post("/api/sessions", (req: Request, res: Response) => {
 });
 
 app.delete("/api/sessions/:id", (req: Request, res: Response) => {
-  const success = agent.getSessionManager().deleteSession(req.params.id);
+  const success = agent.getSessionManager().deleteSession(req.params.id as string);
   res.json({ success });
 });
 
-// Directory Tree Node Type
 interface FileNode {
   name: string;
   path: string;
@@ -85,7 +108,7 @@ interface FileNode {
 }
 
 function buildFileTree(dirPath: string, relativeRoot = "", depth = 0): FileNode[] {
-  if (depth > 3) return []; // Stay safe with max depth 3
+  if (depth > 3) return [];
   try {
     const files = fs.readdirSync(dirPath, { withFileTypes: true });
     const nodes: FileNode[] = [];
@@ -119,7 +142,6 @@ function buildFileTree(dirPath: string, relativeRoot = "", depth = 0): FileNode[
 
       nodes.push(node);
     }
-    // Sort directories first, then files alphabetically
     return nodes.sort((a, b) => {
       if (a.isDirectory && !b.isDirectory) return -1;
       if (!a.isDirectory && b.isDirectory) return 1;

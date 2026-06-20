@@ -62,7 +62,7 @@
   }
 
   .terminal-header {
-    @apply px-4 py-2 bg-slate-950 text-slate-400 text-xs font-sans font-bold flex items-center justify-between border-b border-slate-850;
+    @apply px-4 py-2 bg-slate-950 text-slate-400 text-xs font-sans font-bold flex items-center justify-between border-b border-slate-800;
   }
 
   .terminal-content {
