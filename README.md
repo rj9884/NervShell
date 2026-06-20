@@ -1,365 +1,110 @@
-# NervShell
+# NervShell: Personal AI Assistant
 
-AI-powered shell agent that translates natural language into machine commands. Send natural language instructions over HTTP and let the agent figure out the commands.
+An autonomous, personal AI assistant dashboard that translates natural language instructions into safe workspace actions and system commands. Built on top of Express, Vite, Tailwind CSS (v4), and OpenRouter APIs.
 
-![Vision V4 Home Screen](./public/images/home.png)
-
-## Table of Contents
-
-- [Architecture Overview](#architecture-overview)
-- [System Flow](#system-flow)
-- [Project Structure](#project-structure)
-- [Technology Stack](#technology-stack)
-- [Setup & Installation](#setup--installation)
-- [Configuration](#configuration)
-- [API Reference](#api-reference)
-- [Tool System](#tool-system)
-- [Agent Loop](#agent-loop)
-- [Extending Tools](#extending-tools)
-- [Security Considerations](#security-considerations)
-- [Troubleshooting](#troubleshooting)
-- [Future Roadmap](#future-roadmap)
-
----
+![NervShell Dashboard](./public/images/home.png)
 
 ## Architecture Overview
 
 ```
-┌─────────────────┐     HTTP      ┌──────────────────┐     API      ┌──────────────┐
-│   Web Browser   │ ◄────────────► │  Express Server  │ ◄───────────► │  OpenRouter  │
-│  (UI at :3000)  │                │    (Node.js)     │               │   (LLM API)  │
-└─────────────────┘                └────────┬─────────┘               └──────────────┘
-                                            │
-                                            │ Child Process
-                                            ▼
-                                     ┌──────────────┐
-                                     │  Shell Exec  │
-                                     │  (tools.ts)  │
-                                     └──────────────┘
+ ┌──────────────────────┐      REST API      ┌────────────────────┐      API       ┌─────────────────┐
+ │   Web Browser Client │ ◄────────────────► │   Express Server   │ ◄────────────► │   OpenRouter    │
+ │ (Landing / Dashboard)│                    │     (Node.js)      │                │    (LLM API)    │
+ └──────────────────────┘                    └─────────┬──────────┘                └─────────────────┘
+                                                       │
+                                                       │ Path Scans & Child Process
+                                                       ▼
+                                            ┌─────────────────────┐
+                                            │ Workspace Exec      │
+                                            │ (File Tree / CLI)   │
+                                            └─────────────────────┘
 ```
-
-**System Components:**
-
-| Component | File | Responsibility |
-|-----------|------|----------------|
-| HTTP Server | src/index.ts | Express routes, static files, request handling |
-| Agent Core | src/agent.ts | LLM communication, conversation state, tool orchestration |
-| Tool Engine | src/tools.ts | Shell command execution, tool definitions |
-| Web UI | public/ | Interactive chat interface |
-
-**Data Flow:**
-
-| Direction | Protocol | From | To |
-|-----------|----------|------|-----|
-| Request | HTTP | Web Browser | Express Server |
-| API Call | HTTPS | Express Server | OpenRouter LLM |
-| Execution | Child Process | Tool Engine | Host Shell |
 
 ---
 
-## System Flow
+## Key Capabilities
 
-![Agent Executing Command](./public/images/executing-command.png)
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI as Web UI
-    participant API as Express API
-    participant Agent as Agent Core
-    participant LLM as OpenRouter LLM
-    participant Shell as Shell Exec
-
-    User->>UI: Type natural language request
-    UI->>API: POST /message
-    API->>Agent: Process message
-    Agent->>Agent: Add to conversation history
-    
-    loop Max 10 iterations
-        Agent->>LLM: Request completion
-        LLM-->>Agent: Response
-        
-        alt Has tool calls
-            Agent->>Shell: Execute command
-            Shell-->>Agent: Return result
-            Agent->>Agent: Add result to history
-        else Text response only
-            Agent-->>API: Return final response
-        end
-    end
-    
-    API-->>UI: JSON response
-    UI-->>User: Display formatted output
-```
+- 🖥️ **Minimal Technical IDE Layout**: Shipped a flat, clean slate-tinted light-theme dashboard design (avoiding glassmorphism) consisting of 3-pane workspaces.
+- 📁 **Workspace File Tree Explorer**: Browse the repository workspace folder structure directly from the dynamic sidebar explorer.
+- 🔗 **System OS Connection Switch**: Toggle connection status in the sidebar:
+  - *Workspace Mode (Disconnected)*: Access is strictly locked down to the repository directory.
+  - *System OS Mode (Connected)*: Directory scopes expand to the home directory (`~` or `/home/rajan`) for system-wide operations.
+- 📊 **Diagnostic Telemetry Dashboard**: Polls active CPU loads, core usage, RAM metrics, OS platform, and uptime gauges in real time.
+- 🛡️ **Safe Mode Execution Policy (Default On)**: Prompts the user with a warning decider box displaying the proposed CLI command before running any shell process. Halt, approve, or reject tasks.
+- 💬 **Conversation Sessions Manager**: Spin up independent sessions dynamically and persist conversation logs locally across server restarts.
+- ✏️ **Frictionless Markdown Parser**: Fenced code blocks with Copy buttons, bold, italic, links, lists, and HTML tables are parsed cleanly.
 
 ---
 
 ## Project Structure
 
-| Path | Type | Description |
-|------|------|-------------|
-| src/index.ts | Source | Express server, route handlers, static file serving |
-| src/agent.ts | Source | AI agent: LLM client, conversation history, tool loop |
-| src/tools.ts | Source | Tool definitions and shell command execution |
-| public/index.html | Asset | Main HTML structure |
-| public/style.css | Asset | UI styling |
-| public/app.js | Asset | Frontend JavaScript |
-| dist/ | Generated | Compiled TypeScript output |
-| .env | Config | Environment variables (not in git) |
-| .env.example | Config | Environment template |
-| package.json | Config | Dependencies and scripts |
-| tsconfig.json | Config | TypeScript configuration |
-
----
-
-## Technology Stack
-
-| Layer | Technology | Version | Purpose |
-|-------|------------|---------|---------|
-| Runtime | Node.js | 18+ | JavaScript runtime |
-| Language | TypeScript | 5.9+ | Type-safe development |
-| Framework | Express | 5.2+ | HTTP server |
-| LLM Client | OpenAI SDK | 6.25+ | OpenRouter API compatibility |
-| Validation | Zod | 4.3+ | Schema validation |
-| Process | child_process | built-in | Shell execution |
-| Dev Tool | tsx | 4.21+ | Hot reload dev server |
-
----
-
-## Setup & Installation
-
-### Prerequisites
-
-- Node.js 18 or higher
-- OpenRouter API key (free tier available)
-
-### Installation Steps
-
-1. Install dependencies
-2. Configure environment by copying .env.example to .env
-3. Edit .env and set OPENROUTER_API_KEY
-
-### Running
-
-| Command | Purpose |
-|---------|---------|
-| npm run dev | Development with hot reload |
-| npm run build | Compile TypeScript to dist/ |
-| npm start | Run production build |
-
----
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| OPENROUTER_API_KEY | Yes | - | API key from openrouter.ai/keys |
-| OPENROUTER_MODEL | No | google/gemini-2.0-flash-exp:free | Model identifier |
-| PORT | No | 3000 | HTTP server port |
-
-### Available Models (Free Tier)
-
-| Model | Provider | Rate Limits |
-|-------|----------|-------------|
-| google/gemini-2.0-flash-exp:free | Google | 15 RPM |
-| deepseek/deepseek-chat:free | DeepSeek | 10 RPM |
-| meta-llama/llama-3.3-70b-instruct:free | Meta | 10 RPM |
+| Component | Path | Description |
+|-----------|------|-------------|
+| **Server Engine** | `src/server/index.ts` | Express routing gateway, telemetry metrics, settings, and workspace APIs. |
+| | `src/server/agent.ts` | OpenRouter API wrapper, assistant logic loop, and execution approvals. |
+| | `src/server/tools.ts` | Tool definitions (`executeCommand`, `readFile`, `writeFile`, `listFiles`, `getSystemInfo`, `webSearch`). |
+| | `src/server/session.ts` | Sessions CRUD manager persisting conversation states to `.sessions.json`. |
+| **Client UI** | `src/client/app.ts` | Client state coordinator, navbar triggers, and API transmission loops. |
+| | `src/client/components/` | Modular views for `Sidebar`, `Chat`, `Input`, and `Workspace` panels. |
+| | `src/client/utils/` | Custom lightweight `markdown` renderer. |
+| | `src/client/styles/main.css` | Minimalist IDE stylesheet config (Tailwind CSS v4). |
 
 ---
 
 ## API Reference
 
-### Endpoints Overview
+### 1. Sessions Management
+- `GET /api/sessions`: Returns list of saved conversation summaries.
+- `POST /api/sessions`: Creates a new session `{ id, title }`.
+- `DELETE /api/sessions/:id`: Deletes session logs.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /message | Send message to agent |
-| GET | /history | Get conversation history |
-| POST | /clear | Clear conversation history |
-| GET | /health | Health check |
-| GET | / | Web UI (static) |
+### 2. Workspace & OS Diagnostics
+- `GET /api/workspace`: Returns directory structure list of relative/system files.
+- `GET /api/system`: Obtains CPU cores, active loads, RAM stats, and uptime.
+- `POST /api/settings`: Updates model configs or connects/disconnects System OS toggles `{ model, systemConnected }`.
 
-### POST /message
-
-Send a natural language message to the AI agent.
-
-**Request Body:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| message | string | Yes | Natural language instruction |
-
-**Error Responses:**
-| Status | Cause |
-|--------|-------|
-| 400 | Missing or invalid message field |
-| 429 | LLM provider rate limit exceeded |
-| 500 | Agent processing error |
-
-### GET /history
-
-Retrieve full conversation history.
-
-Returns array of conversation messages with roles: system, user, assistant, tool.
-
-### POST /clear
-
-Reset conversation history to initial system prompt only.
+### 3. Agent Execution Loop
+- `POST /message`: Submits query `{ message, sessionId, safeMode }`. If Safe Mode halts CLI task, returns:
+  `{ status: "awaiting_approval", toolCall: { id, name, command } }`.
+- `POST /api/approve`: Approves/rejects pending CLI task `{ sessionId, toolCallId, approved, command, safeMode }`. Returns next AI response stream.
+- `GET /history?sessionId=id`: Obtains session messages.
+- `POST /clear`: Clears session log `{ sessionId }`.
 
 ---
 
-## Tool System
+## Setup & Running
 
-### Current Tools
+### Prerequisites
+- Node.js 18 or higher
+- OpenRouter API Key (placed in `.env` variable `OPENROUTER_API_KEY`)
 
-![Neural Flow Output](./public/images/output.png)
+### Installation
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Setup environment keys:
+   ```bash
+   cp .env.example .env
+   # Edit .env and enter your OpenRouter key
+   ```
 
-| Tool | Function | Parameters | Returns |
-|------|----------|------------|---------|
-| executeCommand | Run shell command | command: string | ToolResult object |
-
-### Tool Execution Flow
-
-```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
-│ LLM decides │───►│ Agent parses │───►│ runTool()   │───►│ Shell exec   │
-│ to use tool │    │ function call│    │ dispatcher  │    │ (30s timeout)│
-└─────────────┘    └──────────────┘    └─────────────┘    └──────────────┘
-                                                               │
-                                                               ▼
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
-│ Agent loops │◄───│ Result added │◄───│ Format as   │◄───│ ToolResult   │
-│ for more    │    │ to history   │    │ JSON string │    │ object       │
-└─────────────┘    └──────────────┘    └─────────────┘    └──────────────┘
-```
-
-### Tool Result Schema
-
-| Field | Type | Description |
-|-------|------|-------------|
-| tool | string | Tool name |
-| success | boolean | Execution status |
-| output | string | stdout, stderr, or error message |
-
----
-
-## Agent Loop
-
-The agent implements a ReAct-style loop for multi-step reasoning.
-
-### Loop Flow
-
-```
-Initialize with system prompt
-         │
-         ▼
-    ┌─────────┐
-    │ Receive │
-    │  user   │
-    │ message │
-    └────┬────┘
-         │
-         ▼
-┌─────────────────┐
-│ Call LLM with   │◄─────────────────────────┐
-│ conversation    │                          │
-│ history + tools │                          │
-└────────┬────────┘                          │
-         │                                    │
-         ▼                                    │
-    ┌─────────┐                               │
-    │ Response │                              │
-    │ has tool │──Yes──► Execute tool ────────┤
-    │  calls?  │         Add result to history│
-    └────┬────┘                               │
-         │ No                                 │
-         ▼                                    │
-    ┌─────────┐                               │
-    │ Return  │                               │
-    │  final  │                               │
-    │ response│                               │
-    └─────────┘                               │
-         │                                    │
-         ▼                                    │
-    Max 10 iterations ────────────────────────┘
-```
-
-### Loop Safety
-
-| Safeguard | Value | Purpose |
-|-----------|-------|---------|
-| Max iterations | 10 | Prevent infinite loops |
-| Command timeout | 30s | Prevent hanging processes |
-| Max buffer | 1MB | Prevent memory exhaustion |
-
----
-
-## Extending Tools
-
-To add a new tool:
-
-1. Define Tool Schema in src/tools.ts
-2. Implement Handler function
-3. Update System Prompt in src/agent.ts
+### Running Scripts
+- **Development**:
+  ```bash
+  npm run dev
+  ```
+  Runs Vite dev server on `http://localhost:5173` and Express on `http://localhost:3000` concurrently with hot reloading.
+- **Production Build**:
+  ```bash
+  npm run build
+  npm start
+  ```
+  Compiles Vite assets and TypeScript server, running production build on `http://localhost:3000`.
 
 ---
 
 ## Security Considerations
 
-| Risk | Mitigation |
-|------|------------|
-| Arbitrary command execution | Run only in trusted environments or containers |
-| Network exposure | Do not expose to public internet without authentication |
-| API key exposure | Store in .env, never commit to git |
-| Resource exhaustion | 30s timeout, 1MB buffer limit on commands |
-| Prompt injection | Zod schema validation on all tool inputs |
-
-### Recommended Deployment
-
-```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   User      │────►│  Reverse     │────►│  NervShell  │
-│   Browser   │     │  Proxy       │     │  (Docker)   │
-└─────────────┘     │  (Auth)      │     └─────────────┘
-                    └──────────────┘
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-| Symptom | Cause | Solution |
-|---------|-------|----------|
-| 429 Provider returned error | Rate limit exceeded | Wait 60s or switch model in .env |
-| Error: OPENROUTER_API_KEY required | Missing API key | Add key to .env file |
-| Commands timeout | Long-running process | Increase timeout in tools.ts |
-| Build errors | TypeScript issues | Run npm install then npm run build |
-| UI not loading | Static files not served | Ensure public/ exists and rebuild |
-
----
-
-## Future Roadmap
-
-Planned features include:
-
-### Intelligence & Connectivity
-- **Multi-Model Orchestration**: Dynamic model switching based on task complexity.
-- **Local LLM Support**: Native integration with Ollama for 100% private execution.
-- **Project RAG**: Vector-based project context to remember files, architecture, and previous solutions.
-
-### Extensibility
-- **Plugin Architecture**: Modular tool system for easy extension without core modification.
-- **Web-Awareness**: Built-in browser sub-agent for documentation lookup and technical research.
-- **Docker Sandbox**: Isolated command execution for enhanced security and safety.
-
-### Interaction & UX
-- **Multi-Session History**: Persistent, cloud-synced (or local-db) conversation management.
-
----
-
-## License
-
-MIT
+- **Path Resolution Boundary**: When disconnected, path parameters are resolved using a strictly locked boundary validation check preventing path traversal attacks.
+- **Command Injection Safety**: Safe Mode halts raw shell execution loops. Running processes requires browser approval validation before triggers.
