@@ -13,17 +13,6 @@ Guidelines:
 4. Use markdown tables, lists, or clean blocks for structured output.
 5. Maintain a professional, helpful developer persona.`;
 
-const AgentResponseSchema = z.object({
-  type: z.union([z.literal("text"), z.literal("tool_call")]),
-  text: z.string().optional(),
-  toolCall: z
-    .object({
-      name: z.string(),
-      arguments: z.record(z.string(), z.unknown()),
-    })
-    .optional(),
-});
-
 type FunctionToolCall = OpenAI.Chat.Completions.ChatCompletionMessageFunctionToolCall;
 
 export interface ConversationMessage {
@@ -59,13 +48,12 @@ export class Agent {
     return this.sessionManager;
   }
 
-  async handleMessage(userMessage: string, sessionId: string): Promise<string> {
+  async handleMessage(userMessage: string, sessionId: string, safeMode = true): Promise<string> {
     let session = this.sessionManager.getSession(sessionId);
     if (!session) {
       session = this.sessionManager.createSession(sessionId);
     }
 
-    // Initialize history with system prompt if empty
     if (session.history.length === 0) {
       session.history.push({ role: "system", content: SYSTEM_PROMPT });
     }
@@ -73,6 +61,66 @@ export class Agent {
     session.history.push({ role: "user", content: userMessage });
     this.sessionManager.updateSessionHistory(sessionId, session.history);
 
+    return this.runAgentLoop(sessionId, safeMode);
+  }
+
+  async handleToolApproval(
+    sessionId: string,
+    toolCallId: string,
+    approved: boolean,
+    command: string,
+    safeMode = true
+  ): Promise<string> {
+    const history = this.sessionManager.getSessionHistory(sessionId);
+
+    let result: ToolResult;
+    if (approved) {
+      try {
+        result = await runTool("executeCommand", { command });
+      } catch (err) {
+        result = {
+          tool: "executeCommand",
+          success: false,
+          output: `Execution error: ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
+    } else {
+      result = {
+        tool: "executeCommand",
+        success: false,
+        output: "Command execution rejected by user.",
+      };
+    }
+
+    // Add tool result to history
+    history.push({
+      role: "tool",
+      tool_call_id: toolCallId,
+      content: JSON.stringify(result),
+    });
+    this.sessionManager.updateSessionHistory(sessionId, history);
+
+    const preliminaryResponses = `[Tool: executeCommand] ${result.success ? "OK" : "FAILED"}\n${result.output}`;
+    const nextResponse = await this.runAgentLoop(sessionId, safeMode);
+
+    // Join the responses
+    if (nextResponse.trim()) {
+      // Check if nextResponse is a pending approval JSON
+      try {
+        const parsed = JSON.parse(nextResponse);
+        if (parsed && parsed.status === "awaiting_approval") {
+          // Append preliminaryResponse to the JSON output
+          parsed.preliminaryResponses = preliminaryResponses + (parsed.preliminaryResponses ? "\n\n" + parsed.preliminaryResponses : "");
+          return JSON.stringify(parsed);
+        }
+      } catch (_) {}
+
+      return preliminaryResponses + "\n\n" + nextResponse;
+    }
+    return preliminaryResponses;
+  }
+
+  private async runAgentLoop(sessionId: string, safeMode: boolean): Promise<string> {
     const responses: string[] = [];
     let maxIterations = 10;
 
@@ -104,6 +152,19 @@ export class Agent {
           const fnName = fnToolCall.function.name;
           const fnArgs = JSON.parse(fnToolCall.function.arguments);
 
+          // Handle Safe Mode interruption
+          if (fnName === "executeCommand" && safeMode) {
+            return JSON.stringify({
+              status: "awaiting_approval",
+              toolCall: {
+                id: toolCall.id,
+                name: fnName,
+                command: fnArgs.command,
+              },
+              preliminaryResponses: responses.join("\n\n"),
+            });
+          }
+
           let result: ToolResult;
           try {
             result = await runTool(fnName, fnArgs);
@@ -115,14 +176,12 @@ export class Agent {
             };
           }
 
-          const toolContent = JSON.stringify(result);
-          
-          // Fetch latest history to prevent race conditions
+          // Reload history and add tool result
           const latestHistory = this.sessionManager.getSessionHistory(sessionId);
           latestHistory.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: toolContent,
+            content: JSON.stringify(result),
           });
           this.sessionManager.updateSessionHistory(sessionId, latestHistory);
 
@@ -136,7 +195,7 @@ export class Agent {
       if (message.content) {
         responses.push(message.content);
       }
-      break; // Exit the loop if no tool calls were generated
+      break;
     }
 
     return responses.filter((r) => r.trim()).join("\n\n");
