@@ -135,6 +135,87 @@
             </p>
           </div>
         </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section id="architecture" class="bg-slate-50 border-t border-border-solid py-20">
+      <div class="max-w-7xl mx-auto px-6 space-y-12">
+        <div class="text-center space-y-4 max-w-2xl mx-auto">
+          <h2 class="text-3xl font-display font-bold tracking-tight">System Data Flow</h2>
+          <p class="text-text-secondary text-base">
+            Clean pipelines that decouple client actions, server routes, agent decisions, and local system environments.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
+          <!-- Item 1: Web Interface -->
+          <div class="panel-card p-6 bg-white space-y-3 relative z-10">
+            <span class="text-xs font-mono text-accent-blue font-bold">01 / CLIENT VIEW</span>
+            <h4 class="text-sm font-bold font-display">Browser UI Dashboard</h4>
+            <p class="text-xs text-text-secondary">
+              Single page interface sending JSON instructions, managing chat sessions, and polling telemetry.
+            </p>
+          </div>
+
+          <!-- Item 2: Express Server -->
+          <div class="panel-card p-6 bg-white space-y-3 relative z-10">
+            <span class="text-xs font-mono text-accent-blue font-bold">02 / GATEWAY ROUTER</span>
+            <h4 class="text-sm font-bold font-display">Express API Server</h4>
+            <p class="text-xs text-text-secondary">
+              Node.js backend serving endpoints, file trees, system diagnostics, and approving CLI executions.
+            </p>
+          </div>
+
+          <!-- Item 3: Agent Core -->
+          <div class="panel-card p-6 bg-white space-y-3 relative z-10">
+            <span class="text-xs font-mono text-accent-blue font-bold">03 / DECISION ENGINE</span>
+            <h4 class="text-sm font-bold font-display">OpenRouter Core Agent</h4>
+            <p class="text-xs text-text-secondary">
+              Orchestrator looping tool definitions, generating structural plans, and parsing output.
+            </p>
+          </div>
+
+          <!-- Item 4: OS Sandboxed Shell -->
+          <div class="panel-card p-6 bg-white space-y-3 relative z-10">
+            <span class="text-xs font-mono text-accent-blue font-bold">04 / SYSTEM LAYER</span>
+            <h4 class="text-sm font-bold font-display">Host Workspace Execution</h4>
+            <p class="text-xs text-text-secondary">
+              Sandboxed runtime reading files, fetching CPU/RAM, and running verified scripts.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- System Status Section -->
+    <section id="demo" class="bg-white border-t border-border-solid py-20">
+      <div class="max-w-7xl mx-auto px-6 space-y-12">
+        <div class="text-center space-y-4 max-w-2xl mx-auto">
+          <h2 class="text-3xl font-display font-bold tracking-tight">Active Engine Status</h2>
+          <p class="text-text-secondary text-base">
+            Telemetry metrics of the gateway server environment running on the host system.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div class="panel-card p-6 bg-slate-50 space-y-2 text-center">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">OpenRouter Latency</span>
+            <div class="text-3xl font-display font-bold text-accent-blue">240 ms</div>
+            <p class="text-[10px] text-text-secondary font-mono">Status: OPTIMAL CONNECTION</p>
+          </div>
+
+          <div class="panel-card p-6 bg-slate-50 space-y-2 text-center">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Tool Verification</span>
+            <div class="text-3xl font-display font-bold text-green-600">6 / 6 Safe</div>
+            <p class="text-[10px] text-text-secondary font-mono">Status: SECURITY SANDBOX OK</p>
+          </div>
+
+          <div class="panel-card p-6 bg-slate-50 space-y-2 text-center">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Gateway Port</span>
+            <div class="text-3xl font-display font-bold text-text-primary">Port 3000</div>
+            <p class="text-[10px] text-text-secondary font-mono">Status: HTTP / LOCALHOST RUNNING</p>
+          </div>
+        </div>
       </div>
     </section>
 
