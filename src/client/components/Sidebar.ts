@@ -143,4 +143,16 @@ export class SidebarComponent {
   public setSystemConnected(connected: boolean): void {
     this.systemConnectToggle.checked = connected;
   }
+
+  public addModelOption(model: string, label?: string): void {
+    const exists = Array.from(this.modelSelect.options).some(
+      (opt) => opt.value === model
+    );
+    if (!exists) {
+      const option = document.createElement("option");
+      option.value = model;
+      option.textContent = label || model;
+      this.modelSelect.appendChild(option);
+    }
+  }
 }

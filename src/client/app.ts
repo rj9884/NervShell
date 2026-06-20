@@ -134,6 +134,10 @@ class App {
       if (settingsRes.ok) {
         const data = await settingsRes.json();
         this.currentModel = data.settings.model;
+        
+        // Dynamically inject settings model in select options if missing (e.g. openrouter/auto)
+        this.sidebar.addModelOption(this.currentModel, `Default (.env) - ${this.currentModel}`);
+        
         this.sidebar.setSelectedModel(this.currentModel);
         this.updateModelHeaderTag(this.currentModel);
         
@@ -373,7 +377,9 @@ class App {
     } else if (model.includes("llama")) {
       this.modelTagEl.textContent = "Llama 3.3";
     } else {
-      this.modelTagEl.textContent = "Custom Model";
+      const parts = model.split("/");
+      const name = parts[parts.length - 1] || model;
+      this.modelTagEl.textContent = name.substring(0, 15);
     }
   }
 }
