@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { Agent } from "./agent.js";
+import { isSystemConnected, setSystemConnected } from "./tools.js";
 
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -108,7 +109,8 @@ interface FileNode {
 }
 
 function buildFileTree(dirPath: string, relativeRoot = "", depth = 0): FileNode[] {
-  if (depth > 3) return [];
+  const maxDepth = isSystemConnected() ? 1 : 3;
+  if (depth > maxDepth) return [];
   try {
     const files = fs.readdirSync(dirPath, { withFileTypes: true });
     const nodes: FileNode[] = [];
@@ -154,7 +156,7 @@ function buildFileTree(dirPath: string, relativeRoot = "", depth = 0): FileNode[
 }
 
 app.get("/api/workspace", (_req: Request, res: Response) => {
-  const workspaceRoot = process.cwd();
+  const workspaceRoot = isSystemConnected() ? os.homedir() : process.cwd();
   const tree = buildFileTree(workspaceRoot);
   res.json({ workspaceRoot, tree });
 });
@@ -185,15 +187,20 @@ app.get("/api/system", (_req: Request, res: Response) => {
 });
 
 app.post("/api/settings", (req: Request, res: Response) => {
-  const { model } = req.body;
+  const { model, systemConnected } = req.body;
   if (model && typeof model === "string") {
     agent.setModel(model);
     console.log(`Model updated to: ${model}`);
+  }
+  if (systemConnected !== undefined) {
+    setSystemConnected(!!systemConnected);
+    console.log(`System connection updated: ${systemConnected}`);
   }
   res.json({
     status: "success",
     settings: {
       model: agent.getModel(),
+      systemConnected: isSystemConnected()
     },
   });
 });

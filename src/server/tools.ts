@@ -11,12 +11,33 @@ export interface ToolResult {
 
 const WORKSPACE_ROOT = process.cwd();
 
+let systemConnected = false;
+
+export function setSystemConnected(connected: boolean): void {
+  systemConnected = connected;
+}
+
+export function isSystemConnected(): boolean {
+  return systemConnected;
+}
+
 function safeResolvePath(relativePath: string): string {
-  const resolved = path.resolve(WORKSPACE_ROOT, relativePath);
-  if (!resolved.startsWith(WORKSPACE_ROOT)) {
-    throw new Error(`Access denied: path '${relativePath}' resolves outside of the workspace.`);
+  if (systemConnected) {
+    let targetPath = relativePath;
+    if (relativePath.startsWith("~")) {
+      targetPath = path.join(os.homedir(), relativePath.slice(1));
+    }
+    if (path.isAbsolute(targetPath)) {
+      return targetPath;
+    }
+    return path.resolve(os.homedir(), targetPath);
+  } else {
+    const resolved = path.resolve(WORKSPACE_ROOT, relativePath);
+    if (!resolved.startsWith(WORKSPACE_ROOT)) {
+      throw new Error(`Access denied: path '${relativePath}' resolves outside of the workspace.`);
+    }
+    return resolved;
   }
-  return resolved;
 }
 
 export function executeCommand(command: string): Promise<ToolResult> {

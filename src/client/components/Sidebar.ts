@@ -6,6 +6,7 @@ export class SidebarComponent {
   private sessionListEl: HTMLElement;
   private safeModeToggle: HTMLInputElement;
   private modelSelect: HTMLSelectElement;
+  private systemConnectToggle: HTMLInputElement;
 
   private onNewChat: () => Promise<void>;
   private onClear: () => Promise<void>;
@@ -13,6 +14,7 @@ export class SidebarComponent {
   private onDeleteSession: (id: string) => Promise<void>;
   private onModelChange: (model: string) => Promise<void>;
   private onSafeModeChange: (enabled: boolean) => void;
+  private onSystemConnectChange: (enabled: boolean) => Promise<void>;
 
   private activeSessionId: string | null = null;
 
@@ -22,6 +24,7 @@ export class SidebarComponent {
     sessionListId: string,
     safeModeToggleId: string,
     modelSelectId: string,
+    systemConnectToggleId: string,
     callbacks: {
       onNewChat: () => Promise<void>;
       onClear: () => Promise<void>;
@@ -29,6 +32,7 @@ export class SidebarComponent {
       onDeleteSession: (id: string) => Promise<void>;
       onModelChange: (model: string) => Promise<void>;
       onSafeModeChange: (enabled: boolean) => void;
+      onSystemConnectChange: (enabled: boolean) => Promise<void>;
     }
   ) {
     this.newChatBtn = document.getElementById(newChatBtnId) as HTMLElement;
@@ -36,6 +40,7 @@ export class SidebarComponent {
     this.sessionListEl = document.getElementById(sessionListId) as HTMLElement;
     this.safeModeToggle = document.getElementById(safeModeToggleId) as HTMLInputElement;
     this.modelSelect = document.getElementById(modelSelectId) as HTMLSelectElement;
+    this.systemConnectToggle = document.getElementById(systemConnectToggleId) as HTMLInputElement;
 
     this.onNewChat = callbacks.onNewChat;
     this.onClear = callbacks.onClear;
@@ -43,6 +48,7 @@ export class SidebarComponent {
     this.onDeleteSession = callbacks.onDeleteSession;
     this.onModelChange = callbacks.onModelChange;
     this.onSafeModeChange = callbacks.onSafeModeChange;
+    this.onSystemConnectChange = callbacks.onSystemConnectChange;
 
     this.init();
   }
@@ -59,6 +65,11 @@ export class SidebarComponent {
     this.modelSelect.addEventListener("change", (e) => {
       const target = e.target as HTMLSelectElement;
       this.onModelChange(target.value);
+    });
+
+    this.systemConnectToggle.addEventListener("change", (e) => {
+      const target = e.target as HTMLInputElement;
+      this.onSystemConnectChange(target.checked);
     });
   }
 
@@ -127,5 +138,9 @@ export class SidebarComponent {
 
   public setSelectedModel(model: string): void {
     this.modelSelect.value = model;
+  }
+
+  public setSystemConnected(connected: boolean): void {
+    this.systemConnectToggle.checked = connected;
   }
 }

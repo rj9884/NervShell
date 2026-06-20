@@ -73,6 +73,7 @@ class App {
       "session-list",
       "safe-mode-toggle",
       "model-select",
+      "system-connect-toggle",
       {
         onNewChat: () => this.handleNewChat(),
         onClear: () => this.handleClearHistory(),
@@ -82,6 +83,7 @@ class App {
         onSafeModeChange: (enabled) => {
           this.safeModeEnabled = enabled;
         },
+        onSystemConnectChange: (enabled) => this.handleSystemConnectChange(enabled),
       }
     );
 
@@ -98,9 +100,32 @@ class App {
     });
   }
 
+  private async handleSystemConnectChange(enabled: boolean): Promise<void> {
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ systemConnected: enabled }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.chat.addMessage(
+          "system",
+          enabled 
+            ? "CONNECTED TO HOST OS: System directory scans enabled (scanned from home folder)." 
+            : "DISCONNECTED FROM HOST OS: System directory scans disabled (locked to workspace folder)."
+        );
+        // Refresh workspace explorer tree
+        await this.workspace.refreshWorkspace();
+      }
+    } catch (err: any) {
+      this.chat.addMessage("error", `Failed to toggle system mode: ${err.message}`);
+    }
+  }
+
   private async loadInitialData(): Promise<void> {
     try {
-      // 1. Sync Settings (Active Model)
+      // 1. Sync Settings (Active Model & System connection status)
       const settingsRes = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -111,6 +136,9 @@ class App {
         this.currentModel = data.settings.model;
         this.sidebar.setSelectedModel(this.currentModel);
         this.updateModelHeaderTag(this.currentModel);
+        
+        // Sync system connect toggle check
+        this.sidebar.setSystemConnected(!!data.settings.systemConnected);
       }
 
       // 2. Sync sessions list
