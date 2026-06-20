@@ -1,16 +1,17 @@
 import OpenAI from "openai";
 import { z } from "zod";
 import { toolDefinitions, runTool, type ToolResult } from "./tools.js";
+import { SessionManager } from "./session.js";
 
-const SYSTEM_PROMPT = `You are NervShell Vision V4, a high-performance system control agent.
-Your goal is to execute tasks with surgical precision and provide concise, structured summaries.
+const SYSTEM_PROMPT = `You are NervShell, a professional workspace personal assistant.
+Your goal is to execute tasks with surgical precision, maintain files, fetch system telemetry, and summarize actions.
 
 Guidelines:
 1. NO internal monologue or narration. Do not say "I will now check...", "Let me look at...", or "I am analyzing...".
-2. When executing tools, simply perform the action.
+2. You have access to clean file management and system info tools. Prefer using specific tools over executing raw shell commands (e.g. listFiles instead of ls, readFile instead of cat) as they are safer and faster.
 3. Your final response should be a clean, objective summary of results.
-4. Use markdown tables or lists for structured data.
-5. Maintain a professional, technical persona.`;
+4. Use markdown tables, lists, or clean blocks for structured output.
+5. Maintain a professional, helpful developer persona.`;
 
 const AgentResponseSchema = z.object({
   type: z.union([z.literal("text"), z.literal("tool_call")]),
@@ -22,8 +23,6 @@ const AgentResponseSchema = z.object({
     })
     .optional(),
 });
-
-type AgentResponse = z.infer<typeof AgentResponseSchema>;
 
 type FunctionToolCall = OpenAI.Chat.Completions.ChatCompletionMessageFunctionToolCall;
 
@@ -37,7 +36,7 @@ export interface ConversationMessage {
 export class Agent {
   private client: OpenAI;
   private model: string;
-  private history: ConversationMessage[];
+  private sessionManager: SessionManager;
 
   constructor(apiKey: string, model = "google/gemini-2.0-flash-exp:free") {
     this.client = new OpenAI({
@@ -45,19 +44,44 @@ export class Agent {
       apiKey,
     });
     this.model = model;
-    this.history = [{ role: "system", content: SYSTEM_PROMPT }];
+    this.sessionManager = new SessionManager();
   }
 
-  async handleMessage(userMessage: string): Promise<string> {
-    this.history.push({ role: "user", content: userMessage });
+  public setModel(model: string): void {
+    this.model = model;
+  }
+
+  public getModel(): string {
+    return this.model;
+  }
+
+  public getSessionManager(): SessionManager {
+    return this.sessionManager;
+  }
+
+  async handleMessage(userMessage: string, sessionId: string): Promise<string> {
+    let session = this.sessionManager.getSession(sessionId);
+    if (!session) {
+      session = this.sessionManager.createSession(sessionId);
+    }
+
+    // Initialize history with system prompt if empty
+    if (session.history.length === 0) {
+      session.history.push({ role: "system", content: SYSTEM_PROMPT });
+    }
+
+    session.history.push({ role: "user", content: userMessage });
+    this.sessionManager.updateSessionHistory(sessionId, session.history);
 
     const responses: string[] = [];
     let maxIterations = 10;
 
     while (maxIterations-- > 0) {
+      const currentHistory = this.sessionManager.getSessionHistory(sessionId);
+
       const completion = await this.client.chat.completions.create({
         model: this.model,
-        messages: this.history as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+        messages: currentHistory as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
         tools: toolDefinitions,
         tool_choice: "auto",
       });
@@ -65,11 +89,13 @@ export class Agent {
       const choice = completion.choices[0];
       const message = choice.message;
 
-      this.history.push({
+      const updatedHistory = [...currentHistory];
+      updatedHistory.push({
         role: "assistant",
         content: message.content ?? "",
         tool_calls: message.tool_calls,
       });
+      this.sessionManager.updateSessionHistory(sessionId, updatedHistory);
 
       if (message.tool_calls && message.tool_calls.length > 0) {
         for (const toolCall of message.tool_calls) {
@@ -77,22 +103,6 @@ export class Agent {
           const fnToolCall = toolCall as FunctionToolCall;
           const fnName = fnToolCall.function.name;
           const fnArgs = JSON.parse(fnToolCall.function.arguments);
-
-          const parsed = AgentResponseSchema.safeParse({
-            type: "tool_call",
-            toolCall: { name: fnName, arguments: fnArgs },
-          });
-
-          if (!parsed.success) {
-            const errorMsg = `Schema validation failed: ${parsed.error.message}`;
-            this.history.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: errorMsg,
-            });
-            responses.push(`[Validation Error] ${errorMsg}`);
-            continue;
-          }
 
           let result: ToolResult;
           try {
@@ -106,33 +116,38 @@ export class Agent {
           }
 
           const toolContent = JSON.stringify(result);
-          this.history.push({
+          
+          // Fetch latest history to prevent race conditions
+          const latestHistory = this.sessionManager.getSessionHistory(sessionId);
+          latestHistory.push({
             role: "tool",
             tool_call_id: toolCall.id,
             content: toolContent,
           });
+          this.sessionManager.updateSessionHistory(sessionId, latestHistory);
 
           responses.push(
             `[Tool: ${fnName}] ${result.success ? "OK" : "FAILED"}\n${result.output}`
           );
         }
-
         continue;
       }
 
-      if (message.content && !message.tool_calls?.length) {
+      if (message.content) {
         responses.push(message.content);
       }
+      break; // Exit the loop if no tool calls were generated
     }
 
-    return responses.filter(r => r.trim()).join("\n\n");
+    return responses.filter((r) => r.trim()).join("\n\n");
   }
 
-  getHistory(): ConversationMessage[] {
-    return this.history;
+  getHistory(sessionId: string): ConversationMessage[] {
+    const session = this.sessionManager.getSession(sessionId);
+    return session ? session.history : [];
   }
 
-  clearHistory(): void {
-    this.history = [{ role: "system", content: SYSTEM_PROMPT }];
+  clearHistory(sessionId: string): void {
+    this.sessionManager.clearSession(sessionId, SYSTEM_PROMPT);
   }
 }

@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express, { type Request, type Response } from "express";
 import path from "path";
+import fs from "fs";
+import os from "os";
 import { Agent } from "./agent.js";
 
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
@@ -18,23 +20,26 @@ const agent = new Agent(OPENROUTER_API_KEY, MODEL);
 const app = express();
 
 app.use(express.static(path.join(process.cwd(), "public")));
-
 app.use(express.json());
 
+// Legacy endpoints (with sessionId routing added)
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
 app.post("/message", async (req: Request, res: Response) => {
-  const { message } = req.body;
+  const { message, sessionId } = req.body;
 
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "A 'message' string field is required in the request body." });
     return;
   }
 
+  // Fallback to default session if none provided
+  const activeSessionId = sessionId || "default_session";
+
   try {
-    const response = await agent.handleMessage(message);
+    const response = await agent.handleMessage(message, activeSessionId);
     res.json({ response });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -43,21 +48,135 @@ app.post("/message", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/history", (_req: Request, res: Response) => {
-  res.json({ history: agent.getHistory() });
+app.get("/history", (req: Request, res: Response) => {
+  const sessionId = (req.query.sessionId as string) || "default_session";
+  res.json({ history: agent.getHistory(sessionId) });
 });
 
-app.post("/clear", (_req: Request, res: Response) => {
-  agent.clearHistory();
+app.post("/clear", (req: Request, res: Response) => {
+  const sessionId = (req.body.sessionId as string) || "default_session";
+  agent.clearHistory(sessionId);
   res.json({ message: "Conversation history cleared." });
 });
 
+// New REST endpoints for Personal Assistant Features
+app.get("/api/sessions", (_req: Request, res: Response) => {
+  res.json({ sessions: agent.getSessionManager().listSessions() });
+});
+
+app.post("/api/sessions", (req: Request, res: Response) => {
+  const { id, title } = req.body;
+  const newSession = agent.getSessionManager().createSession(id, title);
+  res.json(newSession);
+});
+
+app.delete("/api/sessions/:id", (req: Request, res: Response) => {
+  const success = agent.getSessionManager().deleteSession(req.params.id);
+  res.json({ success });
+});
+
+// Directory Tree Node Type
+interface FileNode {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size?: number;
+  children?: FileNode[];
+}
+
+function buildFileTree(dirPath: string, relativeRoot = "", depth = 0): FileNode[] {
+  if (depth > 3) return []; // Stay safe with max depth 3
+  try {
+    const files = fs.readdirSync(dirPath, { withFileTypes: true });
+    const nodes: FileNode[] = [];
+
+    for (const file of files) {
+      if (
+        file.name === "node_modules" ||
+        file.name === ".git" ||
+        file.name === "dist" ||
+        file.name.startsWith(".")
+      ) {
+        continue;
+      }
+      const fullPath = path.join(dirPath, file.name);
+      const relPath = path.join(relativeRoot, file.name);
+      const isDir = file.isDirectory();
+
+      const node: FileNode = {
+        name: file.name,
+        path: relPath,
+        isDirectory: isDir,
+      };
+
+      if (isDir) {
+        node.children = buildFileTree(fullPath, relPath, depth + 1);
+      } else {
+        try {
+          node.size = fs.statSync(fullPath).size;
+        } catch (_) {}
+      }
+
+      nodes.push(node);
+    }
+    // Sort directories first, then files alphabetically
+    return nodes.sort((a, b) => {
+      if (a.isDirectory && !b.isDirectory) return -1;
+      if (!a.isDirectory && b.isDirectory) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  } catch (err) {
+    console.error("Failed to read dir:", dirPath, err);
+    return [];
+  }
+}
+
+app.get("/api/workspace", (_req: Request, res: Response) => {
+  const workspaceRoot = process.cwd();
+  const tree = buildFileTree(workspaceRoot);
+  res.json({ workspaceRoot, tree });
+});
+
+app.get("/api/system", (_req: Request, res: Response) => {
+  try {
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const loadAvg = os.loadavg();
+    res.json({
+      cpu: {
+        cores: os.cpus().length,
+        load1Min: loadAvg[0],
+      },
+      memory: {
+        total: totalMem,
+        free: freeMem,
+        used: usedMem,
+        usagePercent: Math.round((usedMem / totalMem) * 100),
+      },
+      uptime: os.uptime(),
+      platform: os.platform(),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to read system diagnostics", details: err.message });
+  }
+});
+
+app.post("/api/settings", (req: Request, res: Response) => {
+  const { model } = req.body;
+  if (model && typeof model === "string") {
+    agent.setModel(model);
+    console.log(`Model updated to: ${model}`);
+  }
+  res.json({
+    status: "success",
+    settings: {
+      model: agent.getModel(),
+    },
+  });
+});
+
 app.listen(PORT, () => {
-  console.log(`AI Agent server running on http://localhost:${PORT}`);
-  console.log(`Model: ${MODEL}`);
-  console.log(`Endpoints:`);
-  console.log(`  POST /message  - Send a message to the agent`);
-  console.log(`  GET  /history  - View conversation history`);
-  console.log(`  POST /clear    - Clear conversation history`);
-  console.log(`  GET  /health   - Health check`);
+  console.log(`AI Assistant server running on http://localhost:${PORT}`);
+  console.log(`Model: ${agent.getModel()}`);
 });
